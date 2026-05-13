@@ -19,14 +19,33 @@ async function getRedis() {
   })
 }
 
-export async function getState(): Promise<{ image: string; mac: string; macs: string[] }> {
+export async function getState(): Promise<{ image: string; mac: string; macs: string[]; aliases: Record<string, string> }> {
   if (isRedisConfigured()) {
     const redis = await getRedis()
     const state = (await redis.get<State>('currentState')) ?? { image: 'e0.png', mac: '' }
     const macs = (await redis.smembers('seenMacs')) as string[]
-    return { ...state, macs }
+    const aliases = (await redis.hgetall('macAliases') ?? {}) as Record<string, string>
+    return { ...state, macs, aliases }
   }
-  return { ...memoryState, macs: Array.from(memoryMacs) }
+  return { ...memoryState, macs: Array.from(memoryMacs), aliases: {} }
+}
+
+export async function setAlias(mac: string, alias: string): Promise<void> {
+  if (isRedisConfigured()) {
+    const redis = await getRedis()
+    if (alias) await redis.hset('macAliases', { [mac]: alias })
+    else await redis.hdel('macAliases', mac)
+  }
+}
+
+export async function deleteMac(mac: string): Promise<void> {
+  if (isRedisConfigured()) {
+    const redis = await getRedis()
+    await redis.srem('seenMacs', mac)
+    await redis.hdel('macAliases', mac)
+  } else {
+    memoryMacs.delete(mac)
+  }
 }
 
 export async function setState(image: string, mac: string): Promise<void> {
