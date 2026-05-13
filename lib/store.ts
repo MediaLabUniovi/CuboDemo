@@ -8,14 +8,14 @@ let memoryState: State = { image: 'e0.png', mac: '' }
 const memoryMacs = new Set<string>()
 
 function isRedisConfigured() {
-  return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
 }
 
 async function getRedis() {
   const { Redis } = await import('@upstash/redis')
   return new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL!,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    url: process.env.KV_REST_API_URL!,
+    token: process.env.KV_REST_API_TOKEN!,
   })
 }
 
